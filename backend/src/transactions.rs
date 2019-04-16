@@ -94,10 +94,10 @@ transactions! {
             seed:    u64,
         }
 
-        /// Create wallet with the given `name`. 1 - inspector, 0 - user, 2 - issuer
+        /// Create portfolio
         struct CreatePortfolio {
-            pub_key: &PublicKey,
             portfolio_id:    u64,
+            pub_key: &PublicKey,
             currencyId_amount_pair : Vec<Vec<u64> >,
         }
     }
@@ -114,10 +114,10 @@ impl Transaction for Transfer {
             .get();
         let mut schema = CurrencySchema :: new(fork);
         let pub_key = self.from();
-        
-        if let Some(wallet) = schema.wallet(pub_key) {
-            let amount = self.portfolio_id();
-            schema.increase_wallet_balance(wallet, amount, &self.hash(), 0);
+        let receiver = self.to();
+        if let Some(portfolio) = schema.portfolio(pub_key) {
+            let id = self.portfolio_id();
+            ///schema.increase_wallet_balance(wallet, amount, &self.hash(), 0);
 
             let entry = TimestampEntry::new(&self.hash(), time.unwrap());
             schema.add_timestamp(entry);
@@ -141,7 +141,10 @@ impl Transaction for CurrencyIssue {
             .get();
         
         let mut schema = CurrencySchema::new(fork);
-
+        let currency_id = self.currency_id();
+        let amount = self.amount();
+        /// There is no checking for double appending currency
+        schema.add_currency(currency_id, amount);
         let entry = TimestampEntry::new(&self.hash(), time.unwrap());
         schema.add_timestamp(entry);
         Ok(())
@@ -160,9 +163,10 @@ impl Transaction for CreatePortfolio {
         let mut schema = CurrencySchema::new(fork);
         let pub_key = self.pub_key();
         let hash = self.hash();
-        if schema.wallet(pub_key).is_none(){
-            let freezed_balance = 0;
-            
+        let id = self.portfolio_id();
+        let currencies = self.currencyId_amount_pair();
+        if schema.portfolio(pub_key).is_none(){
+            schema.create_portfolio(id, pub_key, currencies);            
             let entry = TimestampEntry::new(&self.hash(), time.unwrap());
             schema.add_timestamp(entry);
             Ok(())

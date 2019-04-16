@@ -19,7 +19,7 @@ use exonum::{
 
 use chrono::{DateTime, Utc};
 
-use wallet::{Wallet, Portfolio};
+use wallet::{Wallet, Portfolio, Id_collections};
 use INITIAL_BALANCE;
 
 
@@ -101,13 +101,16 @@ where
         MapIndex::new("cryptocurrency.issuers_pubkey", &self.view)
     }
 
-    pub fn portfolios(&self) -> ProofMapIndex<&T, PublicKey, Portfolio> {
+    /// Contains PublicKeys and vectors of portfolios ID
+    pub fn portfolios(&self) -> ProofMapIndex<&T, PublicKey, Portfolio > {
         ProofMapIndex::new("cryptocurrency.portfolios", &self.view)
     }
 
+    /// Get holder of portfolio
     pub fn portfolio(&self, holder: &PublicKey) -> Option<Portfolio> {
         self.portfolios().get(holder)
     }
+
 }
 
 /// Implementation of mutable methods.
@@ -129,11 +132,19 @@ impl<'a> CurrencySchema<&'a mut Fork> {
         ProofMapIndex::new("cryptocurrency.portfolios", &mut self.view)
     }
 
-    pub fn create_portfolio(&mut self, holder: &PublicKey, currencies: Vec<Vec<u64> >) {
+    pub fn create_portfolio(&mut self, id: u64, holder: &PublicKey, currencies: Vec<Vec<u64> >) {
         let portfolio = {
-            Portfolio::new(holder, currencies);
+            Portfolio::new(id, holder, currencies)
         };
         self.portfolio_mut().put(holder, portfolio);
+    }
+
+    pub fn currency_and_amount(&self) -> Vec<Vec<u64> >{
+        Vec :: new()
+    }
+
+    pub fn add_currency(&mut self, currency_id: u64, amount: u64){
+        self.currency_and_amount().push(vec![currency_id, amount]);
     }
     /// Increase balance of the wallet and append new record to its history.
     ///

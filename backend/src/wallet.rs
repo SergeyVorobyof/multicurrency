@@ -27,12 +27,23 @@ encoding_struct! {
         history_hash:       &Hash,
         freezed_balance:    u64,
     }
+}
+
+encoding_struct! {
 
     struct Portfolio {
+        id:                u64,
         holder:            &PublicKey,
         currencies:        Vec<Vec<u64> >,
     }
 }
+
+encoding_struct! {
+    struct Id_collections {
+        ids:     Vec<u64>,
+    }
+}
+
 
 impl Wallet {
     /// Returns a copy of this wallet with updated balance.
@@ -51,6 +62,7 @@ impl Wallet {
 impl Portfolio {
     pub fn collect_portfolio(self, holder: &PublicKey, currencies: Vec<Vec<u64> >) -> Self {
         Self::new(
+            self.id(),
             holder,
             currencies,
         ) 
